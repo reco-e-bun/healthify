@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,8 @@ void main() async {
   if (!(storedData == null || storedData == false)) {
     initialRoute = "home";
   }
+
+  await dotenv.load();
 
   runApp(MyApp(initialRoute: initialRoute));
 }
@@ -474,8 +477,7 @@ class _FormPageState extends State<FormPage> {
       Uri.parse('https://api.openai.com/v1/chat/completions'),
       headers: {
         "Content-Type": "application/json",
-        'Authorization':
-            'Bearer sk-proj-mgFXyPz77QiHTDRKPrwdT3BlbkFJmHq6qfhHh6mP1MUETzlI',
+        'Authorization': 'Bearer ${dotenv.env['token']}',
       },
       body: jsonEncode(
         {
