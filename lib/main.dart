@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -347,7 +349,7 @@ class _FormPageState extends State<FormPage> {
     );
   }
 
-  void nextButtonHandler() {
+  void nextButtonHandler() async {
     for (int i = 0; i <= 8; i++) {
       if (controllerList[i].text == "" && i != 6 && i != 7) {
         //6 si 7 sunt field-urile alea optionale
@@ -404,34 +406,115 @@ class _FormPageState extends State<FormPage> {
       int muscleMassGoal) async {
     final prefs = await SharedPreferences.getInstance();
 
-    List<String> formFieldNames = [
-      "age",
-      "weight",
-      "height",
-      "breakfast",
-      "lunch",
-      "dinner",
-      "snacks",
-      "allergens",
-      "weightGoal",
+    List<String> muscleMassList = <String>[
+      "Very weak",
+      "Weak",
+      "Close to average",
+      "Average",
+      "Above average",
+      "Strong",
+      "Very strong"
     ];
 
-    for (int i = 0; i <= 8; i++) {
-      if (i == 0 || i == 2) {
-        //age si height
-        await prefs.setInt(formFieldNames[i], int.parse(formFields[i].text));
-      } else if (i == 1 || i == 8) {
-        //weight si weightGoal
-        await prefs.setDouble(
-            formFieldNames[i], double.parse(formFields[i].text));
-      } else {
-        await prefs.setString(formFieldNames[i], formFields[i].text);
-      }
+    // ba tega asta e useless gen nu o sa o folosim deloc in aplicatie
+    // o las aici doar in caz ca sunt prost si nu realizez unde o folosim 💵
+    // List<String> formFieldNames = [
+    //   "age",
+    //   "weight",
+    //   "height",
+    //   "breakfast",
+    //   "lunch",
+    //   "dinner",
+    //   "snacks",
+    //   "allergens",
+    //   "weightGoal",
+    // ];
+
+    // for (int i = 0; i <= 8; i++) {
+    //   if (i == 0 || i == 2) {
+    //     //age si height
+    //     await prefs.setInt(formFieldNames[i], int.parse(formFields[i].text));
+    //   } else if (i == 1 || i == 8) {
+    //     //weight si weightGoal
+    //     await prefs.setDouble(
+    //         formFieldNames[i], double.parse(formFields[i].text));
+    //   } else {
+    //     await prefs.setString(formFieldNames[i], formFields[i].text);
+    //   }
+    // }
+
+    // //muscleMass si muscleMassGoal
+    // await prefs.setInt("muscleMass", muscleMass);
+    // await prefs.setInt("muscleMassGoal", muscleMassGoal);
+
+    //query ul de la chatGPT
+    String query =
+        "You are a nutritionist and personal trainer and you have to provide me a repeating 5-day program of physical exercises and diet trough json form by the scheme: diet: [day1: [breakfast: [], lunch: [], dinner: [], snacks:[]], day2:[...], ... (and so on for the other days)], exercises: [day1: [], day2: [], ... (and so on for the other days)]. you have to take in consideration the following facts about me: i am ${formFields[0].text} years old, i have ${formFields[1].text} kg and ${formFields[2].text} cm, my diet in a normal day is the following: at breakfast i eat ${formFields[3].text}, at lunch ${formFields[4].text}, at dinner ${formFields[5].text}";
+
+    //snacks
+    if (formFields[6].text == "") {
+      query = query + ".";
+    } else {
+      query =
+          query + " and between meals sometimes i eat ${formFields[6].text}.";
     }
 
-    //muscleMass si muscleMassGoal
-    await prefs.setInt("muscleMass", muscleMass);
-    await prefs.setInt("muscleMassGoal", muscleMassGoal);
+    //allergens
+    if (formFields[7].text != "") {
+      query = query + " I am also allergic to ${formFields[7].text}.";
+    }
+
+    //muscleMass si celelalte bazate pe asta
+    query = query +
+        " My muscle mass is ${muscleMassList[muscleMass]}. I want to get to ${formFields[8].text} kg and be ${muscleMassList[muscleMassGoal]}. please give me only the json i asked for and nothing else in your response.";
+
+    // print(query);
+
+    final response = await http.post(
+      Uri.parse('https://api.openai.com/v1/chat/completions'),
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization':
+            'Bearer sk-proj-mgFXyPz77QiHTDRKPrwdT3BlbkFJmHq6qfhHh6mP1MUETzlI',
+      },
+      body: jsonEncode(
+        {
+          "model": "gpt-3.5-turbo",
+          "messages": [
+            {
+              "role": "system",
+              "content": query,
+            },
+          ],
+          "max_tokens": 4000,
+          "temperature": 1,
+          "top_p": 1,
+        },
+      ),
+    );
+
+    final decodedResponse = jsonDecode(response.body);
+    final message = decodedResponse['choices'][0]['message']['content'];
+
+    final decodedJsonResponse = jsonDecode(message);
+
+    for (int i = 1; i <= 5; i++) {
+      String s = "day${i}";
+      String key = "day${i}Meals";
+      String value = "${decodedJsonResponse['diet'][s]}";
+
+      // print(decodedJsonResponse['diet'][s]);
+      await prefs.setString(key, value);
+    }
+
+    for (int i = 1; i <= 5; i++) {
+      String s = "day${i}";
+      String key = "day${i}Exercises";
+      String value = "${decodedJsonResponse['exercises'][s]}";
+
+      // print(decodedJsonResponse['diet'][s]);
+      await prefs.setString(key, value);
+    }
 
     await prefs.setBool("SignedUp", true);
   }
