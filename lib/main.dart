@@ -2,38 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  var initialRoute = "form";
+
+  final prefs = await SharedPreferences.getInstance();
+  final storedData = prefs.getBool("SignedUp");
+  if (!(storedData == null || storedData == false)) {
+    initialRoute = "home";
+  }
+
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({required this.initialRoute});
+  final String initialRoute;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        //colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 18, 176, 13), brightness: Brightness.light),
-        colorScheme: ColorScheme.light()
-            .copyWith(primary: Color.fromARGB(255, 40, 150, 20)),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Healthify'),
-    );
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          //colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 18, 176, 13), brightness: Brightness.light),
+          colorScheme: const ColorScheme.light()
+              .copyWith(primary: const Color.fromARGB(255, 40, 150, 20)),
+          useMaterial3: true,
+        ),
+        initialRoute: initialRoute,
+        routes: {
+          "form": (context) => const FormPage(title: 'Healthify'),
+          "home": (context) => const HomePage(title: 'Healthify'),
+        }
+
+        //home: const MyHomePage(title: 'Healthify'),
+        );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class FormPage extends StatefulWidget {
+  const FormPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<FormPage> createState() => _FormPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class HomePage extends StatefulWidget {
+  const HomePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _FormPageState extends State<FormPage> {
   List<String> list = <String>[
     "Very weak",
     "Weak",
@@ -60,29 +85,11 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-
-    checkIfUserSignedUp();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (alreadySignedUp == true) {
-      return Scaffold(
-        body: TextButton(
-          onPressed: resetSignedUpData,
-          child: Center(
-            child: Text("reset"),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
-        title: Text(widget.title, style: TextStyle(color: Colors.white)),
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -380,21 +387,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
     updateLocalData(controllerList, list.indexOf(dropdownValue1),
         list.indexOf(dropdownValue2));
-  }
 
-  checkIfUserSignedUp() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedData = prefs.getBool("SignedUp");
-
-    if (storedData == null || storedData == false) {
-      setState(() {
-        alreadySignedUp = false;
-      });
-    } else {
-      setState(() {
-        alreadySignedUp = true;
-      });
-    }
+    Navigator.pushReplacementNamed(context, 'home');
   }
 
   resetSignedUpData() async {
@@ -404,7 +398,6 @@ class _MyHomePageState extends State<MyHomePage> {
     final prefs = await SharedPreferences.getInstance();
 
     prefs.setBool("SignedUp", false);
-    checkIfUserSignedUp();
   }
 
   updateLocalData(List<TextEditingController> formFields, int muscleMass,
@@ -441,6 +434,63 @@ class _MyHomePageState extends State<MyHomePage> {
     await prefs.setInt("muscleMassGoal", muscleMassGoal);
 
     await prefs.setBool("SignedUp", true);
-    checkIfUserSignedUp();
+  }
+}
+
+class _HomePageState extends State<HomePage> {
+  int selectedIndex = 0;
+
+  List<Widget> widgetOptions = <Widget>[
+    Text("Today's Program"),
+    Text("Track progress")
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
+      ),
+      body: SingleChildScrollView(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+            widgetOptions[selectedIndex],
+            TextButton(
+              onPressed: resetSignedUpData,
+              child: const Text("reset"),
+            ),
+          ])),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment),
+            label: "Program",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month),
+            label: "Track progress",
+          )
+        ],
+        currentIndex: selectedIndex,
+        onTap: onItemTap,
+      ),
+    );
+  }
+
+  void onItemTap(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+  }
+
+  resetSignedUpData() async {
+    //functia asta e doar pentru debugging
+    //nu ar trebui sa ajunga in codul final :)
+
+    final prefs = await SharedPreferences.getInstance();
+
+    prefs.setBool("SignedUp", false);
   }
 }
