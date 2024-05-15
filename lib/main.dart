@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -266,7 +267,8 @@ class _FormPageState extends State<FormPage> {
                 child: Text(
                   "Describe your weight and muscle mass goals after a 30-day program:",
                   style: TextStyle(fontSize: 20),
-                )),
+                )
+            ),
             //weight goal
             const Padding(
                 padding: EdgeInsets.only(top: 12, left: 12),
@@ -505,7 +507,7 @@ class _FormPageState extends State<FormPage> {
       String key = "day${i}Meals";
       String value = "${decodedJsonResponse['diet'][s]}";
 
-      // print(decodedJsonResponse['diet'][s]);
+      print(decodedJsonResponse['diet'][s]);
       await prefs.setString(key, value);
     }
 
@@ -514,7 +516,7 @@ class _FormPageState extends State<FormPage> {
       String key = "day${i}Exercises";
       String value = "${decodedJsonResponse['exercises'][s]}";
 
-      // print(decodedJsonResponse['diet'][s]);
+      print(decodedJsonResponse['exercises'][s]);
       await prefs.setString(key, value);
     }
 
@@ -524,10 +526,85 @@ class _FormPageState extends State<FormPage> {
 
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
+  int currentDay = 1;
 
-  List<Widget> widgetOptions = <Widget>[
-    Text("Today's Program"),
-    Text("Track progress")
+  late List<Widget> widgetOptions = <Widget>[
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 20),
+            child: Text(
+              "Today's program",
+              style: TextStyle(fontSize: 26),
+              textAlign: TextAlign.center,
+            )
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 0),
+            child: Text(
+              "Day $currentDay",
+              style: const TextStyle(fontSize: 21),
+              textAlign: TextAlign.center,
+            )
+          ),
+          //diet
+          const Padding(
+            padding: EdgeInsets.only(top: 70),
+            child: ExpansionTile(
+              title: Text("Diet", style: TextStyle(fontSize: 20)),
+              children: <Widget>[
+                ExpansionTile(
+                  title: Text("Breakfast", style: TextStyle(fontSize: 17)),
+                  children: <Widget>[
+                    ListTile(title: Text('bla bla'), contentPadding: EdgeInsets.only(left: 30)),
+                    ListTile(title: Text('bla bla bla'), contentPadding: EdgeInsets.only(left: 30)),
+                  ]
+                ),
+                ExpansionTile(
+                  title: Text("Lunch", style: TextStyle(fontSize: 17)),
+                  children: <Widget>[
+
+                  ]
+                ),
+                ExpansionTile(
+                  title: Text("Dinner", style: TextStyle(fontSize: 17)),
+                  children: <Widget>[
+
+                  ]
+                ),
+              ]
+            ),
+          ),
+          //exercises
+          const ExpansionTile(
+            title: Text("Exercises", style: TextStyle(fontSize: 20)),
+            children: <Widget>[
+              
+            ]
+          ),
+          //view entire program
+          Padding(
+            padding: const EdgeInsets.only(top: 80, left: 70, right: 70),
+            child: TextButton(
+              style: ButtonStyle(
+                fixedSize: MaterialStateProperty.all<Size?>(const Size(10, 10)),
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                backgroundColor: MaterialStateProperty.all<Color>(
+                    Theme.of(context).colorScheme.primary),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+              ),
+              onPressed: (){},   //il fac putin mai incolo
+              child: const Text("View entire program", style: TextStyle(fontSize: 16)),
+            )
+          )
+        ],
+    ),
+    const Text("Track progress")
   ];
 
   @override
@@ -538,15 +615,18 @@ class _HomePageState extends State<HomePage> {
         title: Text(widget.title, style: const TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
-          child: Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-            widgetOptions[selectedIndex],
-            TextButton(
-              onPressed: resetSignedUpData,
-              child: const Text("reset"),
-            ),
-          ])),
+                widgetOptions[selectedIndex],
+                TextButton(
+                  style: ButtonStyle(padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.only(top: 50))),
+                  onPressed: resetSignedUpData,
+                  child: const Text("reset"),
+                ),
+              ]
+            )
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
