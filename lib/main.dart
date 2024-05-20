@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:math';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -527,12 +529,12 @@ class _FormPageState extends State<FormPage> {
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
 
-  // vezi ca asta ar trebuie sa fie curDay da tu nu stii sa denumesti variabile 🤰
+
   int currentDay = 1;
 
   //da eroare ca nu e initialized dar daca il initializez nu mai merge :)
   //si e gen eroare d aia care merge aplicatia cu tot cu ea adc o las asa 😘
-  late String breakfast, lunch, dinner, exercises;
+  late String breakfast = "", lunch = "", dinner = "", exercises = "";
 
   @override
   void initState() {
@@ -584,14 +586,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void updateDayCounter() async {
-    //e literalmente cea mai proasta solutie pe care o puteam gasi doar ca doar pe asta am gasit o
-    //ca sa intelegi redeclara tot widgetOptions cand fac o schimbare
-    //altfel nu merge :)
-
-    //daca poti sa scoti declaratia de la WidgetOptions in alta functie sau clasa ar fi minunat
-    //ca sunt prea palit sa fac asta
-    //ca gen daca trebuie sa schimbi cv de acolo trebuie sa schimbi din ambele parti
-    //linia: 602 si 691
     setState(() {
       currentDay++;
     });
@@ -599,72 +593,133 @@ class _HomePageState extends State<HomePage> {
     await updateStateByDay();
 
     setState(() {
-      widgetOptions = <Widget>[
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            const Padding(
-                padding: EdgeInsets.only(top: 20),
-                child: Text(
-                  "Today's program",
-                  style: TextStyle(fontSize: 26),
-                  textAlign: TextAlign.center,
-                )),
-            Padding(
-                padding: const EdgeInsets.only(top: 0),
-                child: Text(
-                  "Day $currentDay",
-                  style: const TextStyle(fontSize: 21),
-                  textAlign: TextAlign.center,
-                )),
-            //diet
-            Padding(
-              padding: EdgeInsets.only(top: 70),
-              child: ExpansionTile(
-                  title: Text("Diet", style: TextStyle(fontSize: 20)),
-                  children: <Widget>[
-                    ExpansionTile(
-                        title:
-                            Text("Breakfast", style: TextStyle(fontSize: 17)),
-                        children: <Widget>[
-                          ListTile(
-                              title: Text(breakfast),
-                              contentPadding: EdgeInsets.only(left: 30)),
-                          TextButton(
-                              onPressed: updateDayCounter, child: Text("aa")),
-                        ]),
-                    ExpansionTile(
-                      title: Text("Lunch", style: TextStyle(fontSize: 17)),
+      widgetOptions = create_widgetOptions();
+    });
+
+    // print(currentDay);
+  }
+
+  create_widgetOptions(){
+    late List<Widget> widgetOptions = <Widget>[
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Padding(
+              padding: EdgeInsets.only(top: 20),
+              child: Text(
+                "Today's program",
+                style: TextStyle(fontSize: 26),
+                textAlign: TextAlign.center,
+              )),
+          Padding(
+              padding: const EdgeInsets.only(top: 0),
+              child: Text(
+                "Day $currentDay",
+                style: const TextStyle(fontSize: 21),
+                textAlign: TextAlign.center,
+              )),
+          //diet
+          Padding(
+            padding: EdgeInsets.only(top: 70),
+            child: ExpansionTile(
+                title: Text("Diet", style: TextStyle(fontSize: 20)),
+                children: <Widget>[
+                  ExpansionTile(
+                      title: Text("Breakfast", style: TextStyle(fontSize: 17)),
                       children: <Widget>[
                         ListTile(
-                            title: Text(lunch),
+                            title: Text(breakfast),
                             contentPadding: EdgeInsets.only(left: 30)),
-                      ],
-                    ),
-                    ExpansionTile(
-                        title: Text("Dinner", style: TextStyle(fontSize: 17)),
-                        children: <Widget>[
-                          ListTile(
-                              title: Text(dinner),
-                              contentPadding: EdgeInsets.only(left: 30)),
-                        ]),
-                  ]),
-            ),
-            //exercises
-            ExpansionTile(
-                title: Text("Exercises", style: TextStyle(fontSize: 20)),
-                children: <Widget>[
-                  ListTile(
-                      title: Text(exercises),
-                      contentPadding: EdgeInsets.only(left: 30)),
+                      ]),
+                  ExpansionTile(
+                    title: Text("Lunch", style: TextStyle(fontSize: 17)),
+                    children: <Widget>[
+                      ListTile(
+                          title: Text(lunch),
+                          contentPadding: EdgeInsets.only(left: 30)),
+                    ],
+                  ),
+                  ExpansionTile(
+                      title: Text("Dinner", style: TextStyle(fontSize: 17)),
+                      children: <Widget>[
+                        ListTile(
+                            title: Text(dinner),
+                            contentPadding: EdgeInsets.only(left: 30)),
+                      ]),
                 ]),
-            //view entire program
-            Padding(
-                padding: const EdgeInsets.only(top: 80, left: 70, right: 70),
+          ),
+          //exercises
+          ExpansionTile(
+              title: Text("Exercises", style: TextStyle(fontSize: 20)),
+              children: <Widget>[
+                ListTile(
+                    title: Text(exercises),
+                    contentPadding: EdgeInsets.only(left: 30)),
+              ]),
+          //view entire program
+          Padding(
+              padding: const EdgeInsets.only(top: 80, left: 70, right: 70),
+              child: TextButton(
+                style: ButtonStyle(
+                  fixedSize: MaterialStateProperty.all<Size?>(const Size(10, 10)),
+                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                      Theme.of(context).colorScheme.primary),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                onPressed: viewEntireProgramButtonHandler,
+                child: const Text("View entire program",
+                    style: TextStyle(fontSize: 16)),
+              ))
+        ],
+      ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Padding(
+              padding: EdgeInsets.only(top: 20, bottom: 50),
+              child: Text(
+                "Track progress",
+                style: TextStyle(fontSize: 26),
+                textAlign: TextAlign.center,
+              )),
+          for(int i=1;i<=5;i++)
+            Row(
+              children: <Widget>[
+                for(int j=(i-1)*6+1;j<=(i-1)*6+6 && j<currentDay;j++)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 0),
+                    child: TextButton(
+                      style: ButtonStyle(
+                        foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                          Theme.of(context).colorScheme.primary      //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
+                        ),
+                      ),
+                      child: Text("$j"),
+                      onPressed: dayButtonHandler,
+                    )
+                  ),
+                for(int j=max((i-1)*6+1, currentDay);j<=(i-1)*6+6;j++)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 0),
+                    child: TextButton(
+                      child: Text("$j"),
+                      onPressed: (){},
+                    )
+                  )
+              ]
+            ),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 40, right: 15, bottom: 10),
                 child: TextButton(
                   style: ButtonStyle(
-                    fixedSize:
-                        MaterialStateProperty.all<Size?>(const Size(10, 10)),
                     foregroundColor:
                         MaterialStateProperty.all<Color>(Colors.white),
                     backgroundColor: MaterialStateProperty.all<Color>(
@@ -675,98 +730,19 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  onPressed: () {}, //il fac putin mai incolo
-                  child: const Text("View entire program",
-                      style: TextStyle(fontSize: 16)),
-                ))
-          ],
-        ),
-        const Text("Track progress")
-      ];
-    });
-
-    // print(currentDay);
-  }
-
-  late List<Widget> widgetOptions = <Widget>[
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        const Padding(
-            padding: EdgeInsets.only(top: 20),
-            child: Text(
-              "Today's program",
-              style: TextStyle(fontSize: 26),
-              textAlign: TextAlign.center,
-            )),
-        Padding(
-            padding: const EdgeInsets.only(top: 0),
-            child: Text(
-              "Day $currentDay",
-              style: const TextStyle(fontSize: 21),
-              textAlign: TextAlign.center,
-            )),
-        //diet
-        Padding(
-          padding: EdgeInsets.only(top: 70),
-          child: ExpansionTile(
-              title: Text("Diet", style: TextStyle(fontSize: 20)),
-              children: <Widget>[
-                ExpansionTile(
-                    title: Text("Breakfast", style: TextStyle(fontSize: 17)),
-                    children: <Widget>[
-                      ListTile(
-                          title: Text(breakfast),
-                          contentPadding: EdgeInsets.only(left: 30)),
-                    ]),
-                ExpansionTile(
-                  title: Text("Lunch", style: TextStyle(fontSize: 17)),
-                  children: <Widget>[
-                    ListTile(
-                        title: Text(lunch),
-                        contentPadding: EdgeInsets.only(left: 30)),
-                  ],
-                ),
-                ExpansionTile(
-                    title: Text("Dinner", style: TextStyle(fontSize: 17)),
-                    children: <Widget>[
-                      ListTile(
-                          title: Text(dinner),
-                          contentPadding: EdgeInsets.only(left: 30)),
-                    ]),
-              ]),
-        ),
-        //exercises
-        ExpansionTile(
-            title: Text("Exercises", style: TextStyle(fontSize: 20)),
-            children: <Widget>[
-              ListTile(
-                  title: Text(exercises),
-                  contentPadding: EdgeInsets.only(left: 30)),
-            ]),
-        //view entire program
-        Padding(
-            padding: const EdgeInsets.only(top: 80, left: 70, right: 70),
-            child: TextButton(
-              style: ButtonStyle(
-                fixedSize: MaterialStateProperty.all<Size?>(const Size(10, 10)),
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                backgroundColor: MaterialStateProperty.all<Color>(
-                    Theme.of(context).colorScheme.primary),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                  onPressed: completeDayButtonHandler,
+                  child: const Text("Complete day"),
                 ),
               ),
-              onPressed: () {}, //il fac putin mai incolo
-              child: const Text("View entire program",
-                  style: TextStyle(fontSize: 16)),
-            ))
-      ],
-    ),
-    const Text("Track progress")
-  ];
+            ),
+        ]
+      )
+    ];
+
+    return widgetOptions;
+  }
+
+  late List<Widget> widgetOptions = create_widgetOptions();
 
   @override
   Widget build(BuildContext context) {
@@ -814,6 +790,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+
+  void viewEntireProgramButtonHandler(){
+    
+  }
+
+  void completeDayButtonHandler(){
+    Navigator.push(context, MaterialPageRoute(builder: (context)=>const completeDayPage()));
+  }
+
+  void dayButtonHandler(){
+
+  }
+
+
   resetSignedUpData() async {
     //functia asta e doar pentru debugging
     //nu ar trebui sa ajunga in codul final :)
@@ -821,5 +811,69 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
 
     prefs.setBool("SignedUp", false);
+  }
+}
+
+class entireProgramPage extends StatelessWidget{
+  const entireProgramPage({super.key});
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text("Healthify", style: const TextStyle(color: Colors.white)),
+      ),
+      body: Column(
+        children: <Widget>[
+          
+        ],
+      )
+    );
+  }
+}
+
+class completeDayPage extends StatelessWidget{
+  const completeDayPage({super.key});
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text("Healthify", style: const TextStyle(color: Colors.white)),
+      ),
+      body: Column(
+        children: <Widget>[
+          //ceva checklist mi-e lene sa fac
+
+          Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 40, right: 15, bottom: 10),
+                child: TextButton(
+                  style: ButtonStyle(
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.white),
+                    backgroundColor: MaterialStateProperty.all<Color>(
+                        Theme.of(context).colorScheme.primary),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                  onPressed: nextDayButtonHandler,
+                  child: const Text("Next day"),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void nextDayButtonHandler(){
+
   }
 }
