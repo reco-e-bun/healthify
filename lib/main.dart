@@ -546,7 +546,13 @@ class _HomePageState extends State<HomePage> {
   updateStateByDay() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final meals = prefs.getString("day${currentDay}Meals");
+    int curDay = currentDay % 5;
+
+    if(curDay == 0) {
+      curDay = 5;
+    }
+
+    final meals = prefs.getString("day${curDay}Meals");
 
     if (meals == null) {
       //asta e pusa aici doar pt ca imi dadea eroare ca era "String?" si nu stiam altcv ce sa i fac :)
@@ -693,27 +699,36 @@ class _HomePageState extends State<HomePage> {
               )),
           for(int i=1;i<=5;i++)
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 for(int j=(i-1)*6+1;j<=(i-1)*6+6 && j<currentDay;j++)
                   Padding(
-                    padding: const EdgeInsets.only(left: 0),
-                    child: TextButton(
-                      style: ButtonStyle(
-                        foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                        backgroundColor: MaterialStateProperty.all<Color>(
-                          Theme.of(context).colorScheme.primary      //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
+                    padding: EdgeInsets.only(left: (j==(i-1)*6+1) ? 0 : 5),
+                    child: SizedBox(
+                      width: 50,
+                      child: TextButton(
+                        style: ButtonStyle(
+                          fixedSize: MaterialStateProperty.all<Size?>(const Size.fromWidth(10)),
+                          foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                            Theme.of(context).colorScheme.primary      //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
+                          ),
                         ),
+                        child: Text("$j"),
+                        onPressed: dayButtonHandler,
                       ),
-                      child: Text("$j"),
-                      onPressed: dayButtonHandler,
                     )
                   ),
                 for(int j=max((i-1)*6+1, currentDay);j<=(i-1)*6+6;j++)
                   Padding(
-                    padding: const EdgeInsets.only(left: 0),
-                    child: TextButton(
-                      child: Text("$j"),
-                      onPressed: (){},
+                    padding: EdgeInsets.only(left: (j==(i-1)*6+1) ? 0 : 5),
+                    child: SizedBox(
+                      width: 50,
+                      child: TextButton(
+
+                        child: Text("$j"),
+                        onPressed: (){},
+                      ),
                     )
                   )
               ]
@@ -800,7 +815,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void completeDayButtonHandler(){
-    Navigator.push(context, MaterialPageRoute(builder: (context)=>const completeDayPage()));
+    Navigator.push(context, MaterialPageRoute(builder: (context)=>completeDayPage(currentDay: currentDay)));
   }
 
   void dayButtonHandler(){
@@ -827,6 +842,7 @@ class entireProgramPage extends StatelessWidget{
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text("Healthify", style: const TextStyle(color: Colors.white)),
+        leading: BackButton(color: Colors.white,),
       ),
       body: Column(
         children: <Widget>[
@@ -837,20 +853,59 @@ class entireProgramPage extends StatelessWidget{
   }
 }
 
-class completeDayPage extends StatelessWidget{
-  const completeDayPage({super.key});
+class completeDayPage extends StatefulWidget{
+  const completeDayPage({super.key, required this.currentDay});
+
+  final int currentDay;
+
+  @override
+  State<completeDayPage> createState() => _completeDayPageState();
+}
+
+class _completeDayPageState extends State<completeDayPage> {
+  bool breakfastCheck = false;
+  bool lunchCheck = false;
+  bool dinnerCheck = false;
+  bool exerciseCheck = false;
+
 
   @override
   Widget build(BuildContext context){
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
-        title: Text("Healthify", style: const TextStyle(color: Colors.white)),
+        leading: BackButton(color: Colors.white,),
+        // foregroundColor: Colors.white,
+        title: Text("Day ${widget.currentDay}", style: const TextStyle(color: Colors.white)),
       ),
       body: Column(
         children: <Widget>[
           //ceva checklist mi-e lene sa fac
 
+          Column(
+            children: [
+              CheckboxListTile(
+                value: breakfastCheck, 
+                title: Text("Breakfast"), 
+                onChanged: (bool? value){setState(() {breakfastCheck = value!;},);},
+              ),
+              CheckboxListTile(
+                value: lunchCheck, 
+                title: Text("Lunch"), 
+                onChanged: (bool? value){setState(() {lunchCheck = value!;},);},
+              ),
+              CheckboxListTile(
+                value: dinnerCheck, 
+                title: Text("Dinner"), 
+                onChanged: (bool? value){setState(() {dinnerCheck = value!;},);},
+              ),
+              CheckboxListTile(
+                value: exerciseCheck, 
+                title: Text("Exercises"), 
+                onChanged: (bool? value){setState(() {exerciseCheck = value!;},);},
+              ),
+            ],
+          ),
           Align(
               alignment: Alignment.bottomRight,
               child: Padding(
@@ -868,7 +923,7 @@ class completeDayPage extends StatelessWidget{
                     ),
                   ),
                   onPressed: nextDayButtonHandler,
-                  child: const Text("Next day"),
+                  child: const Text("Finish day"),
                 ),
               ),
             ),
