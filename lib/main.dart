@@ -583,6 +583,10 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       exercises = joinedExercises;
     });
+
+    setState(() {
+      widgetOptions = create_widgetOptions();
+    });
   }
 
   void updateDayCounter() async {
