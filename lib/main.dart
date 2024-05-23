@@ -11,10 +11,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:math';
+import 'package:animated_text_kit/animated_text_kit.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  var initialRoute = "form";
+  var initialRoute = "start";
 
   final prefs = await SharedPreferences.getInstance();
   final storedData = prefs.getBool("SignedUp");
@@ -43,12 +45,79 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: initialRoute,
         routes: {
+          "start": (context) => StartPage(),
           "form": (context) => const FormPage(title: 'Healthify'),
           "home": (context) => const HomePage(title: 'Healthify'),
         }
 
         //home: const MyHomePage(title: 'Healthify'),
         );
+  }
+}
+
+class StartPage extends StatefulWidget{
+  StartPage({super.key});
+
+  @override
+  State<StartPage> createState() => _StartPageState();
+}
+
+class _StartPageState extends State<StartPage> {
+  bool showButton = false;
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            AnimatedTextKit(
+              animatedTexts: [
+                TypewriterAnimatedText(
+                  "Welcome to Healthify!", 
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 27), 
+                  speed: const Duration(milliseconds: 50),
+                ),
+                TypewriterAnimatedText(
+                  "To start,\nplease tell us about yourself",
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 22),
+                  speed: const Duration(milliseconds: 50),
+                ),
+              ],
+              totalRepeatCount: 1,
+              pause: const Duration(milliseconds: 2000),
+              onFinished: (){setState(() {
+                showButton = true;
+              });},
+            ),
+            if(showButton)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 50, right: 20),
+                  child: TextButton(
+                    onPressed: nextButtonHandler,
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(Colors.white), 
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),),
+                    child: Text("Next", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                  ),
+                ),
+              )
+          ],
+        )
+      )
+    );
+  }
+
+  void nextButtonHandler(){
+    Navigator.pushReplacementNamed(context, 'form');
   }
 }
 
@@ -998,15 +1067,19 @@ class _completeDayPageState extends State<completeDayPage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         leading: BackButton(color: Colors.white,),
-        // foregroundColor: Colors.white,
         title: Text("Day ${widget.currentDay}", style: const TextStyle(color: Colors.white)),
       ),
       body: Column(
         children: <Widget>[
-          //ceva checklist mi-e lene sa fac
-
           Column(
             children: [
+              const Padding(
+                padding: const EdgeInsets.only(top: 15, left: 15, bottom: 20),
+                child: Text(
+                  "Please check the objectives of your program that you completed today",
+                  style: TextStyle(fontSize: 18)
+                ),
+              ),
               CheckboxListTile(
                 value: breakfastCheck, 
                 title: Text("Breakfast"), 
