@@ -1,11 +1,5 @@
-// Ca sa nu ti fac viata un chin cu codul asta pt culorile pentru fiecare zi
-//singura linie pe care trb sa o modifici e 740 🙌
-
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -478,7 +472,8 @@ class _FormPageState extends State<FormPage> {
 
     final prefs = await SharedPreferences.getInstance();
 
-    prefs.setBool("SignedUp", false);
+    //prefs.setBool("SignedUp", false);
+    prefs.clear();
   }
 
   updateLocalData(List<TextEditingController> formFields, int muscleMass,
@@ -602,7 +597,7 @@ class _FormPageState extends State<FormPage> {
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
 
-
+  final prefs = SharedPreferences.getInstance();
   int currentDay = 1;
 
   //da eroare ca nu e initialized dar daca il initializez nu mai merge :)
@@ -622,7 +617,20 @@ class _HomePageState extends State<HomePage> {
   updateStateByDay() async {
     final prefs = await SharedPreferences.getInstance();
 
-    int curDay = currentDay % 5;
+    int? day = 1;
+    if (prefs.getInt("currentDay") != null){
+      day = prefs.getInt("currentDay");
+    }
+    if (day == null){
+      return;
+    }
+
+
+    setState(() {
+      currentDay = day!;
+    });
+
+    int curDay = day % 5;
 
     if(curDay == 0) {
       curDay = 5;
@@ -806,7 +814,7 @@ class _HomePageState extends State<HomePage> {
                           fixedSize: MaterialStateProperty.all<Size?>(const Size.fromWidth(10)),
                           foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
                           backgroundColor: MaterialStateProperty.all<Color>(
-                            (colorList[j] == "red" ? Colors.red : (colorList[j] == "yellow" ? Colors.yellow : Colors.green))   //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
+                            (colorList[j] == "red" ? Colors.red : (colorList[j] == "yellow" ? Color.fromARGB(255, 218, 198, 14) : Theme.of(context).colorScheme.primary))   //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
                           ),
                         ),
                         child: Text("$j"),
@@ -905,7 +913,7 @@ class _HomePageState extends State<HomePage> {
 
 
   void viewEntireProgramButtonHandler(){
-    
+    Navigator.push(context, MaterialPageRoute(builder: (context)=>entireProgramPage()));
   }
 
   void completeDayButtonHandler(){
@@ -923,7 +931,123 @@ class _HomePageState extends State<HomePage> {
 
     final prefs = await SharedPreferences.getInstance();
 
-    prefs.setBool("SignedUp", false);
+    //prefs.setBool("SignedUp", false);
+    await prefs.clear();
+  }
+}
+
+class entireProgramPage extends StatefulWidget {
+  const entireProgramPage({super.key});
+
+  @override
+  State<entireProgramPage> createState() => entireProgramPageState();
+}
+
+class entireProgramPageState extends State<entireProgramPage> {
+  late List<String> breakfast = List<String>.filled(6, ""), lunch = List<String>.filled(6, ""), dinner = List<String>.filled(6, ""), exercise = List<String>.filled(6, "");
+
+  @override
+  void initState(){
+    super.initState();
+
+    getState();
+  }
+
+  getState() async{
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> breakfast_decoded = List<String>.filled(6, ""), lunch_decoded = List<String>.filled(6, ""), dinner_decoded = List<String>.filled(6, ""), exercise_decoded = List<String>.filled(6, "");
+    
+    for(int i=1;i<=5;i++){
+      final meals = prefs.getString("day${i}Meals");
+      final exercises = prefs.getString("day${i}Exercises");
+
+      if (meals == null || exercises == null) {
+        return;
+      }
+
+      final decodedMeals = jsonDecode(meals);
+      final decodedExercises = jsonDecode(exercises);
+
+      breakfast_decoded[i] = decodedMeals["breakfast"].join(', ');
+      lunch_decoded[i] = decodedMeals["lunch"].join(', ');
+      dinner_decoded[i] = decodedMeals["dinner"].join(', ');
+      exercise_decoded[i] = decodedExercises.join(', ');
+    }
+
+    setState(() {
+      breakfast = breakfast_decoded;
+      lunch = lunch_decoded;
+      dinner = dinner_decoded;
+      exercise = exercise_decoded;
+    });
+
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        leading: BackButton(color: Colors.white,),
+        title: Text("Program", style: const TextStyle(color: Colors.white)),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.only(top: 15, bottom: 40),
+              child: Text(
+                "Your program consists in the following 5-day repeating program:",
+                style: TextStyle(fontSize: 23),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            for(int i=1;i<=5;i++)
+              ExpansionTile(
+                title: Text("Day $i", style: TextStyle(fontSize: 23)),
+                children: <Widget>[
+                  ExpansionTile(
+                    title: Text("Diet", style: TextStyle(fontSize: 20)),
+                    children: <Widget>[
+                      ExpansionTile(
+                          title: Text("Breakfast", style: TextStyle(fontSize: 17)),
+                          children: <Widget>[
+                            ListTile(
+                                title: Text(breakfast[i]),
+                                contentPadding: EdgeInsets.only(left: 30)),
+                          ]),
+                      ExpansionTile(
+                        title: Text("Lunch", style: TextStyle(fontSize: 17)),
+                        children: <Widget>[
+                          ListTile(
+                              title: Text(lunch[i]),
+                              contentPadding: EdgeInsets.only(left: 30)),
+                        ],
+                      ),
+                      ExpansionTile(
+                          title: Text("Dinner", style: TextStyle(fontSize: 17)),
+                          children: <Widget>[
+                            ListTile(
+                                title: Text(dinner[i]),
+                                contentPadding: EdgeInsets.only(left: 30)),
+                          ]),
+                    ]),
+                    ExpansionTile(
+                      title: Text("Exercises", style: TextStyle(fontSize: 20)),
+                      children: <Widget>[
+                        ListTile(
+                            title: Text(exercise[i]),
+                            contentPadding: EdgeInsets.only(left: 30)),
+                      ]),
+                ]
+              )
+          ]
+        ),
+      )
+    );
   }
 }
 
@@ -1025,25 +1149,6 @@ class _specificDayPageState extends State<specificDayPage> {
   }
 }
 
-class entireProgramPage extends StatelessWidget{
-  const entireProgramPage({super.key});
-
-  @override
-  Widget build(BuildContext context){
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: Text("Healthify", style: const TextStyle(color: Colors.white)),
-        leading: BackButton(color: Colors.white,),
-      ),
-      body: Column(
-        children: <Widget>[
-          
-        ],
-      )
-    );
-  }
-}
 
 class completeDayPage extends StatefulWidget{
   const completeDayPage({super.key, required this.currentDay, required this.updateDayCounter});
@@ -1074,10 +1179,10 @@ class _completeDayPageState extends State<completeDayPage> {
           Column(
             children: [
               const Padding(
-                padding: const EdgeInsets.only(top: 15, left: 15, bottom: 20),
+                padding: EdgeInsets.only(top: 15, left: 15, bottom: 20),
                 child: Text(
                   "Please check the objectives of your program that you completed today",
-                  style: TextStyle(fontSize: 18)
+                  style: TextStyle(fontSize: 21)
                 ),
               ),
               CheckboxListTile(
@@ -1129,6 +1234,11 @@ class _completeDayPageState extends State<completeDayPage> {
   }
 
   void nextDayButtonHandler() async {
+    if (widget.currentDay == 30) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>FinalPage()));
+    }
+
+
     int numberCompleted = 0;
 
     if(breakfastCheck == true){
@@ -1183,5 +1293,54 @@ class _completeDayPageState extends State<completeDayPage> {
 
     final String exerciseKey = "exerciseDay${widget.currentDay}";
     await prefs.setBool(exerciseKey, exerciseCheck);
+
+    await prefs.setInt("currentDay", widget.currentDay+1);
+  }
+}
+
+
+class FinalPage extends StatefulWidget{
+  FinalPage({super.key});
+
+  @override
+  State<FinalPage> createState() => _FinalPageState();
+}
+
+class _FinalPageState extends State<FinalPage> {
+  bool showButton = false;
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            AnimatedTextKit(
+              animatedTexts: [
+                TypewriterAnimatedText(
+                  "You have finished the 30-day program!", 
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 27), 
+                  speed: const Duration(milliseconds: 50),
+                ),
+                TypewriterAnimatedText(
+                  "Congratulations for all the progress you have made so far!",
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 22),
+                  speed: const Duration(milliseconds: 50),
+                ),
+                TypewriterAnimatedText(
+                  "You can start to ",
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 22),
+                  speed: const Duration(milliseconds: 50),
+                ),
+              ],
+              totalRepeatCount: 1,
+              pause: const Duration(milliseconds: 2000),
+            ),
+          ],
+        )
+      )
+    );
   }
 }
