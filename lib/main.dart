@@ -1,3 +1,7 @@
+// Ca sa nu ti fac viata un chin cu codul asta pt culorile pentru fiecare zi
+//singura linie pe care trb sa o modifici e 740 🙌
+
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -536,6 +540,9 @@ class _HomePageState extends State<HomePage> {
   //si e gen eroare d aia care merge aplicatia cu tot cu ea adc o las asa 😘
   late String breakfast = "", lunch = "", dinner = "", exercises = "";
 
+  //sunt in avion si nush daca exista list.resize asa ca fac asta pt ca nu am acces la google 🎶
+  List<String> colorList = <String>["red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red", "red",];
+
   @override
   void initState() {
     super.initState();
@@ -576,7 +583,7 @@ class _HomePageState extends State<HomePage> {
       dinner = joinedDinner;
     });
 
-    final exercise = prefs.getString("day${currentDay}Exercises");
+    final exercise = prefs.getString("day${curDay}Exercises");
 
     if (exercise == null) {
       //asta e pusa aici doar pt ca imi dadea eroare ca era "String?" si nu stiam altcv ce sa i fac :)
@@ -589,6 +596,24 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       exercises = joinedExercises;
     });
+
+    //nu trb for doar imi era lene sa fac doar pt una asa ca ramane asa e 30^2 nu face nimeni urat
+    for(int i = 1; i<currentDay; i++){
+      final String key = "colorDay${i}";
+
+      final color = prefs.getString(key);
+
+      if(color != null){
+        setState(() {
+          colorList[i] = color;
+        });
+      }
+    }
+
+    // for(int i = 1; i<currentDay; i++){
+    //   print(colorList[i]);
+    // }
+    // print("");
 
     setState(() {
       widgetOptions = create_widgetOptions();
@@ -609,7 +634,8 @@ class _HomePageState extends State<HomePage> {
     // print(currentDay);
   }
 
-  create_widgetOptions(){
+  create_widgetOptions() {
+
     late List<Widget> widgetOptions = <Widget>[
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -711,11 +737,11 @@ class _HomePageState extends State<HomePage> {
                           fixedSize: MaterialStateProperty.all<Size?>(const Size.fromWidth(10)),
                           foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
                           backgroundColor: MaterialStateProperty.all<Color>(
-                            Theme.of(context).colorScheme.primary      //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
+                            (colorList[j] == "red" ? Colors.red : (colorList[j] == "yellow" ? Colors.yellow : Colors.green))   //asta am pus-o doar de forma ca trebuie mai intai facut shared preferances
                           ),
                         ),
                         child: Text("$j"),
-                        onPressed: dayButtonHandler,
+                        onPressed: () { dayButtonHandler(j); },
                       ),
                     )
                   ),
@@ -725,7 +751,6 @@ class _HomePageState extends State<HomePage> {
                     child: SizedBox(
                       width: 50,
                       child: TextButton(
-
                         child: Text("$j"),
                         onPressed: (){},
                       ),
@@ -815,11 +840,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   void completeDayButtonHandler(){
-    Navigator.push(context, MaterialPageRoute(builder: (context)=>completeDayPage(currentDay: currentDay)));
+    Navigator.push(context, MaterialPageRoute(builder: (context)=>completeDayPage(currentDay: currentDay, updateDayCounter: updateDayCounter)));
   }
 
-  void dayButtonHandler(){
-
+  dayButtonHandler(int day){
+    Navigator.push(context, MaterialPageRoute(builder: (context)=>specificDayPage(currentDay: day,)));
   }
 
 
@@ -830,6 +855,104 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
 
     prefs.setBool("SignedUp", false);
+  }
+}
+
+class specificDayPage extends StatefulWidget {
+  const specificDayPage({super.key, required this.currentDay});
+
+  final int currentDay;
+
+  @override
+  State<specificDayPage> createState() => _specificDayPageState();
+}
+
+class _specificDayPageState extends State<specificDayPage> {
+  bool breakfastCheck = false;
+  bool lunchCheck = false;
+  bool dinnerCheck = false;
+  bool exerciseCheck = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    getState();
+  }
+
+  getState() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final String breakfastKey = "breakfastDay${widget.currentDay}";
+    final breakfastResult = prefs.getBool(breakfastKey);
+    if(breakfastResult != null){
+      setState(() {
+        breakfastCheck = breakfastResult;
+      });
+    }
+
+    final String lunchKey = "lunchDay${widget.currentDay}";
+    final lunchResult = prefs.getBool(lunchKey);
+    if(lunchResult != null){
+      setState(() {
+        lunchCheck = lunchResult;
+      });
+    }
+
+    final String dinnerKey = "dinnerDay${widget.currentDay}";
+    final dinnerResult = prefs.getBool(dinnerKey);
+    if(dinnerResult != null){
+      setState(() {
+        dinnerCheck = dinnerResult;
+      });
+    }
+
+    final String exerciseKey = "exerciseDay${widget.currentDay}";
+    final exerciseResult = prefs.getBool(exerciseKey);
+    if(exerciseResult != null){
+      setState(() {
+        exerciseCheck = exerciseResult;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        leading: BackButton(color: Colors.white,),
+        title: Text("Day ${widget.currentDay} Results", style: const TextStyle(color: Colors.white)),
+      ),
+      body: Column(
+        children: <Widget>[
+          Column(
+            children: [
+              CheckboxListTile(
+                value: breakfastCheck, 
+                title: Text("Breakfast"), 
+                onChanged: (bool? value){},
+              ),
+              CheckboxListTile(
+                value: lunchCheck, 
+                title: Text("Lunch"), 
+                onChanged: (bool? value){},
+              ),
+              CheckboxListTile(
+                value: dinnerCheck, 
+                title: Text("Dinner"), 
+                onChanged: (bool? value){},
+              ),
+              CheckboxListTile(
+                value: exerciseCheck, 
+                title: Text("Exercises"), 
+                onChanged: (bool? value){},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -854,9 +977,10 @@ class entireProgramPage extends StatelessWidget{
 }
 
 class completeDayPage extends StatefulWidget{
-  const completeDayPage({super.key, required this.currentDay});
+  const completeDayPage({super.key, required this.currentDay, required this.updateDayCounter});
 
   final int currentDay;
+  final updateDayCounter;
 
   @override
   State<completeDayPage> createState() => _completeDayPageState();
@@ -867,7 +991,6 @@ class _completeDayPageState extends State<completeDayPage> {
   bool lunchCheck = false;
   bool dinnerCheck = false;
   bool exerciseCheck = false;
-
 
   @override
   Widget build(BuildContext context){
@@ -932,7 +1055,60 @@ class _completeDayPageState extends State<completeDayPage> {
     );
   }
 
-  void nextDayButtonHandler(){
+  void nextDayButtonHandler() async {
+    int numberCompleted = 0;
 
+    if(breakfastCheck == true){
+      numberCompleted++;
+    }
+    if(lunchCheck == true){
+      numberCompleted++;
+    }
+    if(dinnerCheck == true){
+      numberCompleted++;
+    }
+    if(exerciseCheck == true){
+      numberCompleted++;
+    }
+
+    await setCompletedDayData(numberCompleted);
+
+    await widget.updateDayCounter();
+
+    Navigator.pop(context);
+  }
+
+  setCompletedDayData(int number) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    late String color;
+
+    if(number == 0 || number == 1){
+      // print("rosu");
+      color = "red";
+    }
+    else if(number == 2 || number == 3){
+      // print("galben");
+      color = "yellow";
+    }
+    else if(number == 4){
+      // print("verde");
+      color = "green";
+    }
+
+    final String key = "colorDay${widget.currentDay}";
+    await prefs.setString(key, color);
+
+    final String breakfastKey = "breakfastDay${widget.currentDay}";
+    await prefs.setBool(breakfastKey, breakfastCheck);
+
+    final String lunchKey = "lunchDay${widget.currentDay}";
+    await prefs.setBool(lunchKey, lunchCheck);
+
+    final String dinnerKey = "dinnerDay${widget.currentDay}";
+    await prefs.setBool(dinnerKey, dinnerCheck);
+
+    final String exerciseKey = "exerciseDay${widget.currentDay}";
+    await prefs.setBool(exerciseKey, exerciseCheck);
   }
 }
