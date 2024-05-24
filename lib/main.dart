@@ -143,11 +143,14 @@ class _FormPageState extends State<FormPage> {
     "Strong",
     "Very strong"
   ];
+  List<String> genders = <String>["Male", "Female"];
+  String gender_dropdownValue = "Male";
   String dropdownValue1 = "Average";
   String dropdownValue2 = "Average";
   bool alreadySignedUp = false;
 
   final List<TextEditingController> controllerList = [
+    TextEditingController(),
     TextEditingController(),
     TextEditingController(),
     TextEditingController(),
@@ -188,6 +191,37 @@ class _FormPageState extends State<FormPage> {
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
                   ]),
+            ),
+
+            //gender
+            const Padding(
+                padding: EdgeInsets.only(top: 45, left: 12),
+                child: Text(
+                  "Gender:",
+                  style: TextStyle(fontSize: 19),
+                )),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              child: DropdownButton<String>(
+                value: gender_dropdownValue,
+                icon: const Icon(Icons.arrow_downward),
+                elevation: 16,
+                underline: Container(
+                  height: 1,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                onChanged: (String? value) {
+                  setState(() {
+                    gender_dropdownValue = value!;
+                  });
+                },
+                items: genders.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
             ),
 
             //weight
@@ -393,6 +427,24 @@ class _FormPageState extends State<FormPage> {
               ),
             ),
 
+            //additional info
+            const Padding(
+                padding: EdgeInsets.only(top: 45, left: 12),
+                child: Text(
+                  "Additional information/goals:",
+                  style: TextStyle(fontSize: 19),
+                )),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              child: TextField(
+                controller: controllerList[9],
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: "Additional information(optional)",
+                ),
+              ),
+            ),
+
             //next button
             Align(
               alignment: Alignment.bottomRight,
@@ -460,137 +512,11 @@ class _FormPageState extends State<FormPage> {
       return;
     }
 
-    updateLocalData(controllerList, list.indexOf(dropdownValue1),
-        list.indexOf(dropdownValue2));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>LoadingPage(formFields: controllerList, muscleMass: list.indexOf(dropdownValue1), muscleMassGoal: list.indexOf(dropdownValue2), gender: genders.indexOf(gender_dropdownValue))));
 
-    Navigator.pushReplacementNamed(context, 'home');
-  }
+    //await updateLocalData(controllerList, list.indexOf(dropdownValue1), list.indexOf(dropdownValue2), genders.indexOf(gender_dropdownValue));
 
-  resetSignedUpData() async {
-    //functia asta e doar pentru debugging
-    //nu ar trebui sa ajunga in codul final :)
-
-    final prefs = await SharedPreferences.getInstance();
-
-    //prefs.setBool("SignedUp", false);
-    prefs.clear();
-  }
-
-  updateLocalData(List<TextEditingController> formFields, int muscleMass,
-      int muscleMassGoal) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    List<String> muscleMassList = <String>[
-      "Very weak",
-      "Weak",
-      "Close to average",
-      "Average",
-      "Above average",
-      "Strong",
-      "Very strong"
-    ];
-
-    // ba tega asta e useless gen nu o sa o folosim deloc in aplicatie
-    // o las aici doar in caz ca sunt prost si nu realizez unde o folosim 💵
-    // List<String> formFieldNames = [
-    //   "age",
-    //   "weight",
-    //   "height",
-    //   "breakfast",
-    //   "lunch",
-    //   "dinner",
-    //   "snacks",
-    //   "allergens",
-    //   "weightGoal",
-    // ];
-
-    // for (int i = 0; i <= 8; i++) {
-    //   if (i == 0 || i == 2) {
-    //     //age si height
-    //     await prefs.setInt(formFieldNames[i], int.parse(formFields[i].text));
-    //   } else if (i == 1 || i == 8) {
-    //     //weight si weightGoal
-    //     await prefs.setDouble(
-    //         formFieldNames[i], double.parse(formFields[i].text));
-    //   } else {
-    //     await prefs.setString(formFieldNames[i], formFields[i].text);
-    //   }
-    // }
-
-    // //muscleMass si muscleMassGoal
-    // await prefs.setInt("muscleMass", muscleMass);
-    // await prefs.setInt("muscleMassGoal", muscleMassGoal);
-
-    //query ul de la chatGPT
-    String query =
-        "You are a nutritionist and personal trainer and you have to provide me a repeating 5-day program of physical exercises and diet trough json form by the scheme: diet: [day1: [breakfast: [], lunch: [], dinner: [], snacks:[]], day2:[...], ... (and so on for the other days)], exercises: [day1: [], day2: [], ... (and so on for the other days)]. you have to take in consideration the following facts about me: i am ${formFields[0].text} years old, i have ${formFields[1].text} kg and ${formFields[2].text} cm, my diet in a normal day is the following: at breakfast i eat ${formFields[3].text}, at lunch ${formFields[4].text}, at dinner ${formFields[5].text}";
-
-    //snacks
-    if (formFields[6].text == "") {
-      query = query + ".";
-    } else {
-      query =
-          query + " and between meals sometimes i eat ${formFields[6].text}.";
-    }
-
-    //allergens
-    if (formFields[7].text != "") {
-      query = query + " I am also allergic to ${formFields[7].text}.";
-    }
-
-    //muscleMass si celelalte bazate pe asta
-    query = query +
-        " My muscle mass is ${muscleMassList[muscleMass]}. I want to get to ${formFields[8].text} kg and be ${muscleMassList[muscleMassGoal]}. please give me only the json i asked for and nothing else in your response.";
-
-    // print(query);
-
-    final response = await http.post(
-      Uri.parse('https://api.openai.com/v1/chat/completions'),
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': 'Bearer ${dotenv.env['token']}',
-      },
-      body: jsonEncode(
-        {
-          "model": "gpt-3.5-turbo",
-          "messages": [
-            {
-              "role": "system",
-              "content": query,
-            },
-          ],
-          "max_tokens": 4000,
-          "temperature": 1,
-          "top_p": 1,
-        },
-      ),
-    );
-
-    final decodedResponse = jsonDecode(response.body);
-    final message = decodedResponse['choices'][0]['message']['content'];
-
-    final decodedJsonResponse = jsonDecode(message);
-
-    for (int i = 1; i <= 5; i++) {
-      String s = "day$i";
-      String key = "day${i}Meals";
-      String value = jsonEncode(decodedJsonResponse['diet'][s]);
-
-      // print(decodedJsonResponse['diet'][s]);
-      // print(jsonEncode(decodedJsonResponse['diet'][s]));
-      await prefs.setString(key, value);
-    }
-
-    for (int i = 1; i <= 5; i++) {
-      String s = "day$i";
-      String key = "day${i}Exercises";
-      String value = jsonEncode(decodedJsonResponse['exercises'][s]);
-
-      // print(decodedJsonResponse['exercises'][s]);
-      await prefs.setString(key, value);
-    }
-
-    await prefs.setBool("SignedUp", true);
+    //Navigator.pushReplacementNamed(context, 'home');
   }
 }
 
@@ -884,7 +810,6 @@ class _HomePageState extends State<HomePage> {
               onPressed: resetSignedUpData,
               child: const Text("reset"),
             ),
-            TextButton(onPressed: updateDayCounter, child: Text("next day")),
           ],
         ),
       ),
@@ -932,7 +857,9 @@ class _HomePageState extends State<HomePage> {
     final prefs = await SharedPreferences.getInstance();
 
     //prefs.setBool("SignedUp", false);
+    
     await prefs.clear();
+    //await prefs.setInt("currentDay", 30);
   }
 }
 
@@ -1234,11 +1161,6 @@ class _completeDayPageState extends State<completeDayPage> {
   }
 
   void nextDayButtonHandler() async {
-    if (widget.currentDay == 30) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>FinalPage()));
-    }
-
-
     int numberCompleted = 0;
 
     if(breakfastCheck == true){
@@ -1259,6 +1181,10 @@ class _completeDayPageState extends State<completeDayPage> {
     await widget.updateDayCounter();
 
     Navigator.pop(context);
+
+    if (widget.currentDay == 30) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>FinalPage()));
+    }
   }
 
   setCompletedDayData(int number) async {
@@ -1321,26 +1247,239 @@ class _FinalPageState extends State<FinalPage> {
               animatedTexts: [
                 TypewriterAnimatedText(
                   "You have finished the 30-day program!", 
-                  textStyle: const TextStyle(color: Colors.white, fontSize: 27), 
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 27),
+                  textAlign: TextAlign.center, 
                   speed: const Duration(milliseconds: 50),
                 ),
                 TypewriterAnimatedText(
                   "Congratulations for all the progress you have made so far!",
-                  textStyle: const TextStyle(color: Colors.white, fontSize: 22),
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 24),
+                  textAlign: TextAlign.center,
                   speed: const Duration(milliseconds: 50),
                 ),
                 TypewriterAnimatedText(
-                  "You can start to ",
+                  "Now you can start a new program by clicking the button below and completing the formular again",
                   textStyle: const TextStyle(color: Colors.white, fontSize: 22),
+                  textAlign: TextAlign.center,
                   speed: const Duration(milliseconds: 50),
                 ),
               ],
               totalRepeatCount: 1,
-              pause: const Duration(milliseconds: 2000),
+              pause: const Duration(milliseconds: 3000),
+              onFinished: (){setState(() {
+                showButton = true;
+              });},
+            ),
+            if(showButton)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 25),
+                  child: TextButton(
+                    onPressed: resetButtonHandler,
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(Colors.white), 
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),),
+                    child: Text("Reset", style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                  ),
+                ),
+              )
+          ],
+        )
+      )
+    );
+  }
+  
+  void resetButtonHandler() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.clear();
+
+    Navigator.pushReplacementNamed(context, 'form');
+  }
+}
+
+
+class LoadingPage extends StatefulWidget{
+  const LoadingPage({super.key, required this.formFields, required this.muscleMass, required this.muscleMassGoal, required this.gender});
+
+  final List<TextEditingController> formFields;
+  final int muscleMass;
+  final int muscleMassGoal;
+  final int gender;
+
+  @override
+  State<LoadingPage> createState() => _LoadingPageState();
+}
+
+class _LoadingPageState extends State<LoadingPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    final formFields = widget.formFields;
+    final muscleMass = widget.muscleMass;
+    final muscleMassGoal = widget.muscleMassGoal;
+    final gender = widget.gender;
+    updateLocalData(formFields, muscleMass, muscleMassGoal, gender);
+  }
+
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      body: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              "Loading",
+              style: const TextStyle(color: Colors.white, fontSize: 27),
+              textAlign: TextAlign.center,
+            ),
+            AnimatedTextKit(
+              animatedTexts: [
+                TyperAnimatedText(
+                  "...",
+                  textStyle: const TextStyle(color: Colors.white, fontSize: 27),
+                  speed: const Duration(milliseconds: 1000),
+                )
+              ],
+              totalRepeatCount: 10000,
+              pause: const Duration(milliseconds: 1000),
             ),
           ],
         )
       )
     );
+  }
+
+  updateLocalData(List<TextEditingController> formFields, int muscleMass,
+      int muscleMassGoal, int gender) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    List<String> muscleMassList = <String>[
+      "Very weak",
+      "Weak",
+      "Close to average",
+      "Average",
+      "Above average",
+      "Strong",
+      "Very strong"
+    ];
+
+    // ba tega asta e useless gen nu o sa o folosim deloc in aplicatie
+    // o las aici doar in caz ca sunt prost si nu realizez unde o folosim 💵
+    // List<String> formFieldNames = [
+    //   "age",
+    //   "weight",
+    //   "height",
+    //   "breakfast",
+    //   "lunch",
+    //   "dinner",
+    //   "snacks",
+    //   "allergens",
+    //   "weightGoal",
+    // ];
+
+    // for (int i = 0; i <= 8; i++) {
+    //   if (i == 0 || i == 2) {
+    //     //age si height
+    //     await prefs.setInt(formFieldNames[i], int.parse(formFields[i].text));
+    //   } else if (i == 1 || i == 8) {
+    //     //weight si weightGoal
+    //     await prefs.setDouble(
+    //         formFieldNames[i], double.parse(formFields[i].text));
+    //   } else {
+    //     await prefs.setString(formFieldNames[i], formFields[i].text);
+    //   }
+    // }
+
+    // //muscleMass si muscleMassGoal
+    // await prefs.setInt("muscleMass", muscleMass);
+    // await prefs.setInt("muscleMassGoal", muscleMassGoal);
+
+    //query ul de la chatGPT
+    String query =
+        "You are a nutritionist and personal trainer and you have to provide me a repeating 5-day program of physical exercises and diet trough json form by the scheme: diet: [day1: [breakfast: [], lunch: [], dinner: [], snacks:[]], day2:[...], ... (and so on for the other days)], exercises: [day1: [], day2: [], ... (and so on for the other days)]. you have to take in consideration the following facts about me: i am ${formFields[0].text} year old ${(gender == 0 ? "man" : "female")}, i have ${formFields[1].text} kg and ${formFields[2].text} cm, my diet in a normal day is the following: at breakfast i eat ${formFields[3].text}, at lunch ${formFields[4].text}, at dinner ${formFields[5].text}";
+
+    //snacks
+    if (formFields[6].text == "") {
+      query = query + ".";
+    } else {
+      query =
+          query + " and between meals sometimes i eat ${formFields[6].text}.";
+    }
+
+    //allergens
+    if (formFields[7].text != "") {
+      query = query + " I am also allergic to ${formFields[7].text}.";
+    }
+
+    //muscleMass si celelalte bazate pe asta
+    query = query +
+        " My muscle mass is ${muscleMassList[muscleMass]}. I want to get to ${formFields[8].text} kg and be ${muscleMassList[muscleMassGoal]}.";
+
+    if (formFields[9].text != ""){
+      query = query + formFields[9].text + ". ";
+    }
+
+    query = query + "please give me only the json i asked for and nothing else in your response.";
+
+    print(query);
+
+    final response = await http.post(
+      Uri.parse('https://api.openai.com/v1/chat/completions'),
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': 'Bearer ${dotenv.env['token']}',
+      },
+      body: jsonEncode(
+        {
+          "model": "gpt-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": query,
+            },
+          ],
+          "max_tokens": 4000,
+          "temperature": 1,
+          "top_p": 1,
+        },
+      ),
+    );
+
+    final decodedResponse = jsonDecode(response.body);
+    final message = decodedResponse['choices'][0]['message']['content'];
+
+    final decodedJsonResponse = jsonDecode(message);
+
+    for (int i = 1; i <= 5; i++) {
+      String s = "day$i";
+      String key = "day${i}Meals";
+      String value = jsonEncode(decodedJsonResponse['diet'][s]);
+
+      // print(decodedJsonResponse['diet'][s]);
+      // print(jsonEncode(decodedJsonResponse['diet'][s]));
+      await prefs.setString(key, value);
+    }
+
+    for (int i = 1; i <= 5; i++) {
+      String s = "day$i";
+      String key = "day${i}Exercises";
+      String value = jsonEncode(decodedJsonResponse['exercises'][s]);
+
+      // print(decodedJsonResponse['exercises'][s]);
+      await prefs.setString(key, value);
+    }
+
+    await prefs.setBool("SignedUp", true);
+
+    Navigator.pushReplacementNamed(context, 'home');
   }
 }
