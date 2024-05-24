@@ -803,13 +803,13 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             widgetOptions[selectedIndex],
-            TextButton(
-              style: ButtonStyle(
-                  padding: MaterialStateProperty.all<EdgeInsets>(
-                      const EdgeInsets.only(top: 50))),
-              onPressed: resetSignedUpData,
-              child: const Text("reset"),
-            ),
+            // TextButton(
+            //   style: ButtonStyle(
+            //       padding: MaterialStateProperty.all<EdgeInsets>(
+            //           const EdgeInsets.only(top: 50))),
+            //   onPressed: resetSignedUpData,
+            //   child: const Text("reset"),
+            // ),
           ],
         ),
       ),
@@ -851,9 +851,6 @@ class _HomePageState extends State<HomePage> {
 
 
   resetSignedUpData() async {
-    //functia asta e doar pentru debugging
-    //nu ar trebui sa ajunga in codul final :)
-
     final prefs = await SharedPreferences.getInstance();
 
     //prefs.setBool("SignedUp", false);
@@ -1258,7 +1255,7 @@ class _FinalPageState extends State<FinalPage> {
                   speed: const Duration(milliseconds: 50),
                 ),
                 TypewriterAnimatedText(
-                  "Now you can start a new program by clicking the button below and completing the formular again",
+                  "Now you can start a new program by clicking the button below and completing the form again!",
                   textStyle: const TextStyle(color: Colors.white, fontSize: 22),
                   textAlign: TextAlign.center,
                   speed: const Duration(milliseconds: 50),
