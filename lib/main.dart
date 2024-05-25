@@ -1427,7 +1427,7 @@ class _LoadingPageState extends State<LoadingPage> {
 
     query = query + "please give me only the json i asked for and nothing else in your response.";
 
-    print(query);
+    //print(query);
 
     final response = await http.post(
       Uri.parse('https://api.openai.com/v1/chat/completions'),
