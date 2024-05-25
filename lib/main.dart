@@ -803,13 +803,13 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             widgetOptions[selectedIndex],
-            // TextButton(
-            //   style: ButtonStyle(
-            //       padding: MaterialStateProperty.all<EdgeInsets>(
-            //           const EdgeInsets.only(top: 50))),
-            //   onPressed: resetSignedUpData,
-            //   child: const Text("reset"),
-            // ),
+            /*TextButton(
+              style: ButtonStyle(
+              padding: MaterialStateProperty.all<EdgeInsets>(
+              const EdgeInsets.only(top: 50))),
+              onPressed: resetSignedUpData,
+              child: const Text("reset"),
+            ),*/
           ],
         ),
       ),
@@ -1369,40 +1369,9 @@ class _LoadingPageState extends State<LoadingPage> {
       "Very strong"
     ];
 
-    // ba tega asta e useless gen nu o sa o folosim deloc in aplicatie
-    // o las aici doar in caz ca sunt prost si nu realizez unde o folosim 💵
-    // List<String> formFieldNames = [
-    //   "age",
-    //   "weight",
-    //   "height",
-    //   "breakfast",
-    //   "lunch",
-    //   "dinner",
-    //   "snacks",
-    //   "allergens",
-    //   "weightGoal",
-    // ];
-
-    // for (int i = 0; i <= 8; i++) {
-    //   if (i == 0 || i == 2) {
-    //     //age si height
-    //     await prefs.setInt(formFieldNames[i], int.parse(formFields[i].text));
-    //   } else if (i == 1 || i == 8) {
-    //     //weight si weightGoal
-    //     await prefs.setDouble(
-    //         formFieldNames[i], double.parse(formFields[i].text));
-    //   } else {
-    //     await prefs.setString(formFieldNames[i], formFields[i].text);
-    //   }
-    // }
-
-    // //muscleMass si muscleMassGoal
-    // await prefs.setInt("muscleMass", muscleMass);
-    // await prefs.setInt("muscleMassGoal", muscleMassGoal);
-
     //query ul de la chatGPT
     String query =
-        "You are a nutritionist and personal trainer and you have to provide me a repeating 5-day program of physical exercises and diet trough json form by the scheme: diet: [day1: [breakfast: [], lunch: [], dinner: [], snacks:[]], day2:[...], ... (and so on for the other days)], exercises: [day1: [], day2: [], ... (and so on for the other days)]. you have to take in consideration the following facts about me: i am ${formFields[0].text} year old ${(gender == 0 ? "man" : "female")}, i have ${formFields[1].text} kg and ${formFields[2].text} cm, my diet in a normal day is the following: at breakfast i eat ${formFields[3].text}, at lunch ${formFields[4].text}, at dinner ${formFields[5].text}";
+        "You are a nutritionist and personal trainer and you have to provide me a repeating 5-day program of physical exercises and diet trough json form by the scheme: diet: [day1: [breakfast: [], lunch: [], dinner: [], snacks:[]], day2:[...], ... (and so on for the other days)], exercises: [day1: [], day2: [], ... (and so on for the other days)]. you have to take in consideration the following facts about me: i am an ${formFields[0].text} year old ${(gender == 0 ? "man" : "female")}, i have ${formFields[1].text} kg and ${formFields[2].text} cm, my diet in a normal day is the following: at breakfast i eat ${formFields[3].text}, at lunch ${formFields[4].text}, at dinner ${formFields[5].text}";
 
     //snacks
     if (formFields[6].text == "") {
